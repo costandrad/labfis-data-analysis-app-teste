@@ -1,23 +1,10 @@
-import asyncio
-from shiny import App, render, ui
-from shinywidgets import output_widget, render_widget
-
-# 1. Função assíncrona para forçar a instalação do lmfit dentro do navegador
-async def inicializar_ambiente():
-    import micropip
-    # Instala o lmfit e garante que as dependências (scipy, numpy) venham juntas
-    await micropip.install("lmfit")
-    await micropip.install("plotly")
-
-# Executa a instalação em background no carregamento do WebAssembly
-asyncio.run(inicializar_ambiente())
-
-# 2. Agora que temos a garantia da instalação, importamos o motor matemático
 import numpy as np
 import plotly.graph_objects as px
 from lmfit import Model
+from shiny import App, render, ui
+from shinywidgets import output_widget, render_widget
 
-# 3. Definição do Modelo Físico
+# Definição do Modelo Físico (Exemplo: Queda Livre / Movimento Uniformemente Variado)
 def modelo_quadratico(t, s0, v0, g):
     return s0 + v0 * t + 0.5 * g * t**2
 
@@ -44,16 +31,20 @@ app_ui = ui.page_fluid(
 
 # Lógica do Servidor (Server)
 def server(input, output, session):
+    # Simulando dados experimentais com erros em X e Y (t e s)
     np.random.seed(42)
     t_exp = np.linspace(0, 4, 15)
     s_real = modelo_quadratico(t_exp, 0.5, 3.0, 9.81)
+    
     t_err = 0.1 * np.ones_like(t_exp)
     s_err = 0.5 * np.ones_like(t_exp)
+    
     t_exp += np.random.normal(0, 0.05, size=len(t_exp))
     s_exp = s_real + np.random.normal(0, 0.4, size=len(s_real))
 
     @render_widget
     def plot():
+        # Ajuste usando o algoritmo ODR (Orthogonal Distance Regression)
         model = Model(modelo_quadratico)
         params = model.make_params(
             s0=input.s0_init(), v0=input.v0_init(), g=input.g_init()
@@ -66,7 +57,9 @@ def server(input, output, session):
         t_fit = np.linspace(0, 4, 100)
         s_fit = result.eval(t=t_fit)
 
+        # Gráfico interativo com Plotly
         fig = px.Figure()
+
         fig.add_trace(
             px.Scatter(
                 x=t_exp,

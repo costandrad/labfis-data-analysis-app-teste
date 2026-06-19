@@ -2,7 +2,7 @@ name: Deploy Shinylive App
 
 on:
   push:
-    branches: [ main, master ] # Dispara o deploy ao commitar na branch principal
+    branches: [ main, master ]
 
 jobs:
   build-deploy:
@@ -30,14 +30,18 @@ jobs:
         python-version: '3.11'
         cache: 'pip'
 
-    - name: Instalar Shinylive Compiler
+    - name: Instalar Dependências do Python e Shinylive
       run: |
         python -m pip install --upgrade pip
+        # Instalamos o shinylive compiler
         pip install shinylive
+        # CRUCIAL: Instalamos as dependências do app no ambiente de build!
+        # Isso permite que o shinylive localize e empacote os arquivos .whl do lmfit e scipy para o Wasm.
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Compilar App para WebAssembly (Shinylive)
       run: |
-        # Transforma a pasta ./app em um site estático na pasta ./site
+        # Agora o compilador tem acesso físico às dependências instaladas e gerará o bundle completo
         shinylive export app site
 
     - name: Configurar Páginas do GitHub
