@@ -1,3 +1,5 @@
+# lwreq: lmfit, plotly, shinywidgets, scipy, numpy
+
 import numpy as np
 import plotly.graph_objects as px
 from lmfit import Model
